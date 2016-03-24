@@ -95,7 +95,7 @@ restingSignalReRefNotched = filtfilt(mainsNotchFilter120, restingSignalReRefNotc
 
 % Compute BLP (band-limited power), i.e. slow rhythms of power envelope
 saveData.blpCorrelations = struct.empty;
-bandPassFrequencyList = [8, 10; 35, 50; 70, 100];
+bandPassFrequencyList = [8, 10; 8, 13; 13, 30; 35, 50; 70, 100; 100, 140];
 for bandPassFrequencies = bandPassFrequencyList'
     bandPassFilter = designfilt('bandpassiir', 'FilterOrder', 4, 'HalfPowerFrequency1', bandPassFrequencies(1), 'HalfPowerFrequency2', bandPassFrequencies(2), 'SampleRate', restingSamplingRate);
     restingSignalReRefNotchedBandPass = filtfilt(bandPassFilter, restingSignalReRefNotched);
@@ -131,8 +131,8 @@ for bandPassFrequencies = bandPassFrequencyList'
         rValid = restingCorrelationMatrix(channelToPlotList, :);    % use max relative to only channels being plotted
 %         rValid = restingCorrelationMatrix;                          % use max of all channels
         rValid = rValid(rValid~=1);                             % exclude auto-correlation from max correlation
-        cLimMin = -max(abs(rValid));
         cLimMax = max(abs(rValid));
+        cLimMin = -cLimMax;
         % cLimMin = min(abs(restingCorrelationMatrix(channelToPlot, :)));
         % cLimMax = max(abs(restingCorrelationMatrix(channelToPlot, :)));
         imagesc(flipud(rot90(reshape([squeeze(restingCorrelationMatrix(channelToPlot, :)), 0, 0], 8, 8))), [cLimMin cLimMax]) % flip and rotate to get orientation of 1-8 left-to-righ on top row
