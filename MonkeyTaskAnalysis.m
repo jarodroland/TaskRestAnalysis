@@ -88,7 +88,7 @@ clear('signalReRefNotchedStd', 'signalReRefNotchedMean', 'signalReRefNotched', '
 numCh = 64;
 % subChannels = [1:4; 5:8];%; 9:12; 13:16; 17:20; 21:24; 25:28; 29:32; 33:36; 37:40; 41:43; 44:48; 49:52; 53:56; 57:60; 61:64];
 subChanSize = 4;    %TODO: must be divsor of numChannels
-subChannels = reshape([1:numChannels], subChanSize, 64/subChanSize)'
+subChannels = reshape([1:numChannels], subChanSize, 64/subChanSize)';
 numSubChan = size(subChannels, 1);
 
 %% Process Task Data
@@ -110,7 +110,7 @@ trialMeanSpectra = zeros(length(freqList), numChannels, trialLen);
 % process spectra per channel due to large signal size
 for subChanListIdx = 1:numSubChan
     subChanList = subChannels(subChanListIdx, :);
-    printf('Processing channels %n to %n of %n', subChanList(1), subChanList(end), numChannels);
+    fprintf('Processing channels %n to %n of %n', subChanList(1), subChanList(end), numChannels);
     
     % calculate spectra for the whole file signal
     clear('taskSpectra');
