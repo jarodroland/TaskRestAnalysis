@@ -86,7 +86,9 @@ signalNorm = bsxfun(@rdivide, bsxfun(@minus, signalReRefNotched,  signalReRefNot
 clear('signalReRefNotchedStd', 'signalReRefNotchedMean', 'signalReRefNotched', 'signalReRef', 'signal5Std')
 
 numCh = 64;
-subChannels = [1:8];%; 9:16; 17:24; 25:32; 33:40; 41:48; 49:56; 57:64];
+% subChannels = [1:4; 5:8];%; 9:12; 13:16; 17:20; 21:24; 25:28; 29:32; 33:36; 37:40; 41:43; 44:48; 49:52; 53:56; 57:60; 61:64];
+subChanSize = 4;    %TODO: must be divsor of numChannels
+subChannels = reshape([1:numChannels], subChanSize, 64/subChanSize)'
 numSubChan = size(subChannels, 1);
 
 %% Process Task Data
@@ -108,6 +110,8 @@ trialMeanSpectra = zeros(length(freqList), numChannels, trialLen);
 % process spectra per channel due to large signal size
 for subChanListIdx = 1:numSubChan
     subChanList = subChannels(subChanListIdx, :);
+    printf('Processing channels %n to %n of %n', subChanList(1), subChanList(end), numChannels);
+    
     % calculate spectra for the whole file signal
     clear('taskSpectra');
     taskSpectra = gabor_cov_fitted(signalNorm(:, subChanList), freqList, samplingRate, 3);                             % Zac's Gabor
@@ -118,11 +122,11 @@ for subChanListIdx = 1:numSubChan
     % average across all ITI and Trial epochs
     numTrials = length(moveStartIndex);
     for i = 1:numTrials
-        itiMeanSpectra(:, subChanListIdx, :)   = itiMeanSpectra(:, subChanListIdx, :)   + taskSpectra(:, subChanListIdx, moveStartIndex(i)-itiLen:moveStartIndex(i));
-        trialMeanSpectra(:, subChanListIdx, :) = trialMeanSpectra(:, subChanListIdx, :) + taskSpectra(:, subChanListIdx, moveStartIndex(i)       :moveStartIndex(i)+trialLen);
+        itiMeanSpectra(:, subChanList, :)   = itiMeanSpectra(:, subChanList, :)   + taskSpectra(:, subChanList, moveStartIndex(i)-itiLen:moveStartIndex(i)-1);
+        trialMeanSpectra(:, subChanList, :) = trialMeanSpectra(:, subChanList, :) + taskSpectra(:, subChanList, moveStartIndex(i)       :moveStartIndex(i)+trialLen-1);
     end
-    itiMeanSpectra(:, subChanListIdx, :) = itiMeanSpectra(:, subChanListIdx, :) ./ numTrials;
-    trialMeanSpectra(:, subChanListIdx, :) = trialMeanSpectra(:, subChanListIdx, :) ./ numTrials;
+    itiMeanSpectra(:, subChanList, :) = itiMeanSpectra(:, subChanList, :) ./ numTrials;
+    trialMeanSpectra(:, subChanList, :) = trialMeanSpectra(:, subChanList, :) ./ numTrials;
 end
 
 % % average spectra across movement periods
