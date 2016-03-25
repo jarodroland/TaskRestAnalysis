@@ -2,6 +2,7 @@
 
 %% Setup
 flags.saveFigures = false; 
+flags.plotNoisyChannel = false;
 
 % define data files
 subjectID = 'Monkey K';
@@ -43,7 +44,6 @@ end
 
 % freqList = 2.^(1:.25:8);                    % exponential frequency distribution
 freqList = 2.^(1:.125:8);                   % exponential frequency distribution
-frequencyIndexToPlot = [10 46];       % index of frequencies (10 & 100Hz) to use in Time-Power plots, used for Carl's list (used w/ Zac's Gabor) %TODO replace with a lookup fxn to the nearest frequency bin
 
 % % Nick's frequency and span lists
 % freqList = [1, 1.3748, 1.8593, 2.4754, 3.2467, 4.198, 5.3545, 6.7417, 8.3839, 10.3043, 12.5237, 15.0601, 17.9281, 21.1386, 24.6979, 28.6084, 32.8676, 37.4689, 42.4012, 47.6496, 71.3898, 77.8856, 84.5496, 91.3519, 98.2627, 105.2527, 133.4449, 140.4231, 147.3279, 154.1397, 160.8411, 167.4164, 192.2115, 197.9879, 203.5827, 208.9922];
@@ -85,10 +85,9 @@ signalNorm = bsxfun(@rdivide, bsxfun(@minus, signalReRefNotched,  signalReRefNot
 
 clear('signalReRefNotchedStd', 'signalReRefNotchedMean', 'signalReRefNotched', 'signalReRef', 'signal5Std')
 
-numCh = 64;
 % subChannels = [1:4; 5:8];%; 9:12; 13:16; 17:20; 21:24; 25:28; 29:32; 33:36; 37:40; 41:43; 44:48; 49:52; 53:56; 57:60; 61:64];
-subChanSize = 4;    %TODO: must be divsor of numChannels
-subChannels = reshape([1:numChannels], subChanSize, 64/subChanSize)';
+subChanSize = 4;    % number of channels to process at a time %NOTE: must be divsor of numChannels
+subChannels = reshape(1:numChannels, subChanSize, numChannels/subChanSize)';
 numSubChan = size(subChannels, 1);
 
 %% Process Task Data
@@ -110,7 +109,7 @@ trialMeanSpectra = zeros(length(freqList), numChannels, trialLen);
 % process spectra per channel due to large signal size
 for subChanListIdx = 1:numSubChan
     subChanList = subChannels(subChanListIdx, :);
-    fprintf('Processing channels %n to %n of %n', subChanList(1), subChanList(end), numChannels);
+    fprintf('Processing channels %n to %n of %n\n', subChanList(1), subChanList(end), numChannels);
     
     % calculate spectra for the whole file signal
     clear('taskSpectra');
@@ -122,8 +121,8 @@ for subChanListIdx = 1:numSubChan
     % average across all ITI and Trial epochs
     numTrials = length(moveStartIndex);
     for i = 1:numTrials
-        itiMeanSpectra(:, subChanList, :)   = itiMeanSpectra(:, subChanList, :)   + taskSpectra(:, subChanList, moveStartIndex(i)-itiLen:moveStartIndex(i)-1);
-        trialMeanSpectra(:, subChanList, :) = trialMeanSpectra(:, subChanList, :) + taskSpectra(:, subChanList, moveStartIndex(i)       :moveStartIndex(i)+trialLen-1);
+        itiMeanSpectra(:, subChanList, :)   = itiMeanSpectra(:, subChanList, :)   + taskSpectra(:, :, moveStartIndex(i)-itiLen:moveStartIndex(i)-1);
+        trialMeanSpectra(:, subChanList, :) = trialMeanSpectra(:, subChanList, :) + taskSpectra(:, :, moveStartIndex(i)       :moveStartIndex(i)+trialLen-1);
     end
     itiMeanSpectra(:, subChanList, :) = itiMeanSpectra(:, subChanList, :) ./ numTrials;
     trialMeanSpectra(:, subChanList, :) = trialMeanSpectra(:, subChanList, :) ./ numTrials;
@@ -146,11 +145,12 @@ end
 
 %% Plot spectrogram
 preMoveLength = itiLen;
-% high pass the difference spectra
-itiTimeMeanSpectra = mean(itiMeanSpectra, 3);
-% itiTimeMeanSpectra = repmat(itiTimeMeanSpectra, 1, 1, size(trialMeanSpectra, 3));   % time averaged ITI spectra
-% diffSpectra = (trialMeanSpectra - itiTimeMeanSpectra) ./ itiTimeMeanSpectra;        % subtract and divide the time averaged ITI spectra
-diffSpectra = bsxfun(@rdivide, bsxfun(@minus, trialMeanSpectra, itiTimeMeanSpectra), itiTimeMeanSpectra);   % subtract and divide the time averaged ITI spectra
+
+% concatenate the iti and trial spectra
+catMeanSpectra = cat(3, itiMeanSpectra, trialMeanSpectra);
+
+itiTimeMeanSpectra = mean(itiMeanSpectra, 3);   % time averaged ITI spectra
+diffSpectra = bsxfun(@rdivide, bsxfun(@minus, catMeanSpectra, itiTimeMeanSpectra), itiTimeMeanSpectra);   % subtract and divide the time averaged ITI spectra
 cLimMax = max(max(max(abs(diffSpectra))));
 
 % create color map with a grey mid region
@@ -162,6 +162,11 @@ greyZeroJet(ceil(cMapLen/2)-cMapGreyWidth:floor(cMapLen/2)+cMapGreyWidth, :) = r
 
 figSpectrogram = figure('units', 'normalized', 'outerposition', [0 0 1 1]);
 for channel = channels
+    % don't plot noisy channels
+    if(~flags.plotNoisyChannel && ~isempty(find(noisyChannels == channel, 1)))
+        continue;
+    end
+    
     subplot(8, 8, channel);
     colormap(greyZeroJet);
     
@@ -189,8 +194,9 @@ for channel = channels
         axis.YTick = freqLabelIndex;
         axis.YTickLabel = [];
     end
-    if channel >= 56
-        axis.XTick = 1:round(samplingRate):size(trialMeanSpectra, 3);
+    if channel > 56
+%         axis.XTick = 1:round(samplingRate):size(trialMeanSpectra, 3);
+        axis.XTick = [1, preMoveLength, preMoveLength+trialLen/2, preMoveLength+trialLen];
         axis.XTickLabel = round((axis.XTick-preMoveLength)/samplingRate, 1);
     else
         axis.XTick = 1:round(samplingRate):size(trialMeanSpectra, 3);
@@ -208,7 +214,7 @@ for channel = channels
 end
 
 if(flags.saveFigures)
-    fileOut = [dataDir 'Figures\Spectrogram - ' subjectID ' - Move vs HoldA - Zac''s Gabor.fig'];
+    fileOut = [dataDir 'Figures\Spectrogram - ' subjectID ' - Move vs Hold - Zac''s Gabor.fig'];
     savefig(figSpectrogram, fileOut);
     print(figSpectrogram, fileOut, '-dpng');
     clear('fileOut');
@@ -216,9 +222,16 @@ if(flags.saveFigures)
 end
 
 %% Plot Time-Power figures for a specific frequencies
+frequencyIndexToPlot = [20 46];       % index of frequencies (10 & 100Hz) to use in Time-Power plots, used for Carl's list (used w/ Zac's Gabor) %TODO replace with a lookup fxn to the nearest frequency bin
+
 figTimePowerPlot = figure('units', 'normalized', 'outerposition', [0 0 1 1]);
 
 for channel = channels
+    % don't plot noisy channels
+    if(~flags.plotNoisyChannel && ~isempty(find(noisyChannels == channel, 1)))
+        continue;
+    end
+    
     subplot(8, 8, channel);
     plot(squeeze(diffSpectra(frequencyIndexToPlot(2), channel, :)), 'r');
     hold on;
@@ -241,7 +254,7 @@ for channel = channels
 end
 
 if(flags.saveFigures)
-    fileOut = [dataDir 'Figures\TimePowerPlot - ' subjectID ' - ' num2str(freqList(frequencyIndexToPlot(1))) 'Hz & ' num2str(freqList(frequencyIndexToPlot(2))) 'Hz - Move vs HoldA - Zac''s Gabor.fig'];
+    fileOut = [dataDir 'Figures\TimePowerPlot - ' subjectID ' - ' num2str(freqList(frequencyIndexToPlot(1))) 'Hz & ' num2str(freqList(frequencyIndexToPlot(2))) 'Hz - Move vs Hold - Zac''s Gabor.fig'];
     savefig(figTimePowerPlot, fileOut);
     print(figTimePowerPlot, fileOut, '-dpng');s
     clear('fileOut');
