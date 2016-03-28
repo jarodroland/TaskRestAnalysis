@@ -76,7 +76,7 @@ for bandPassFrequencies = bandPassFrequencyList'
     % clear('restingSignal', 'restingSignalReRef', 'restingSignalReRefNotched', 'restingSignalReRefNotchedBandPass', 'restingBandPassEnvelope');
 
     % plot the correlation matrix
-    channelToPlotList = [8 24];
+    channelToPlotList = [1 40];
     for channelToPlot = channelToPlotList
         figCorrelationMatrix = figure();
         colorMapWhiteMiddle = jet();

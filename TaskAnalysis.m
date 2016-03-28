@@ -195,7 +195,6 @@ saveData.trialMeanSpectra = trialMeanSpectra;
 
 
 %% Plot spectrogram
-% high pass the difference spectra
 itiTimeMeanSpectra = mean(itiMeanSpectra, 3);
 % itiTimeIqrSpectra = iqr(itiMeanSpectra, 3);
 % itiTimeStdSpectra = std(itiMeanSpectra, 0, 3);

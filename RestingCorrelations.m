@@ -23,7 +23,7 @@ metaDataFile = [dataDir 'Task\' subjectID '_ReachingTask_DataStructure.mat'];
 kineticsDataFile = [dataDir 'Task\' subjectID '_ReachingTask3D_Contra_Kinematics_All.mat'];
 trialsDataFile = [dataDir 'Task\' subjectID '_ReachingTask3D_Contra_QuestionableTrials_Move_and_Spectra_All.mat'];
 % restingDataFile = [dataDir 'Rest\ .mat'];
-restingDataFile = [dataDir 'Rest\121004-B5-7-INV_7E_EDF_seg2.mat'];
+restingDataFile = [dataDir 'Rest\' subjectID' '_RestingECoGData.mat'];
 outDataFile = [dataDir 'Rest\RestingCorrelations.mat'];
 
 
@@ -95,8 +95,8 @@ restingSignalReRefNotched = filtfilt(mainsNotchFilter120, restingSignalReRefNotc
 
 % Compute BLP (band-limited power), i.e. slow rhythms of power envelope
 saveData.blpCorrelations = struct.empty;
-bandPassFrequencyList = [8, 10; 8, 13; 13, 30; 35, 50; 70, 100; 100, 140];
-for bandPassFrequencies = bandPassFrequencyList'
+bandPassFrequencyList = [8, 10; 8, 13; 13, 30; 35, 50; 70, 100; 100, 140]';
+for bandPassFrequencies = bandPassFrequencyList
     bandPassFilter = designfilt('bandpassiir', 'FilterOrder', 4, 'HalfPowerFrequency1', bandPassFrequencies(1), 'HalfPowerFrequency2', bandPassFrequencies(2), 'SampleRate', restingSamplingRate);
     restingSignalReRefNotchedBandPass = filtfilt(bandPassFilter, restingSignalReRefNotched);
 
@@ -127,10 +127,10 @@ for bandPassFrequencies = bandPassFrequencyList'
         colorMapWhiteMiddle = jet();
         colorMapWhiteMiddle(30:35, :) = repmat([1, 1, 1], 6, 1);    % white out the middle 6 indices
 
-%         rValid = restingCorrelationMatrix(channelToPlot, :);        % use max relative to individual channel
-        rValid = restingCorrelationMatrix(channelToPlotList, :);    % use max relative to only channels being plotted
+%         rValid = restingCorrelationMatrix(channelToPlot, :);        % use max relative to the individual channel
+        rValid = restingCorrelationMatrix(channelToPlotList, :);    % use max relative to channels being plotted
 %         rValid = restingCorrelationMatrix;                          % use max of all channels
-        rValid = rValid(rValid~=1);                             % exclude auto-correlation from max correlation
+        rValid = rValid(rValid~=1);                                 % exclude auto-correlation from max correlation
         cLimMax = max(abs(rValid));
         cLimMin = -cLimMax;
         % cLimMin = min(abs(restingCorrelationMatrix(channelToPlot, :)));
