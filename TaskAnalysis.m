@@ -3,7 +3,7 @@
 %% Setup
 % define data files
 % % Pt 139 (PT55) data files
-ptNumber = 139;
+ptNumber = 133;
 % dataDir = 'E:\Data\ECoG Task-Rest\139\';
 % metaDataFile = [dataDir 'Task\PT55_ReachingTask_DataStructure.mat'];
 % kineticsDataFile = [dataDir 'Task\PT55_ReachingTask3D_Contra_Kinematics_All.mat'];
@@ -134,7 +134,7 @@ for i = 1:numTaskFiles
     taskSignalReRefNotched{i} = filtfilt(mainsNotchFilter60, taskSignalReRef{i});
     taskSignalReRefNotched{i} = filtfilt(mainsNotchFilter120, taskSignalReRefNotched{i});
     
-    % normalize signal by subtracting mean and dividing inter-quartile range
+    % normalize signal by subtracting mean and dividing standard deviation (inter-quartile range)
     taskSignalReRefNotchedMean = median(taskSignalReRefNotched{i}, 1);
 %     taskSignalReRefNotchedIQR = iqr(taskSignalReRefNotched{i}, 1);
     taskSignalReRefNotchedStd = std(taskSignalReRefNotched{i}, 0, 1);
