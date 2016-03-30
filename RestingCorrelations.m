@@ -3,7 +3,7 @@
 %% Setup
 % define data files
 % % Pt 139 (PT55) data files
-ptNumber = 139;
+ptNumber = 135;
 % dataDir = 'E:\Data\ECoG Task-Rest\139\';
 % metaDataFile = [dataDir 'Task\PT55_ReachingTask_DataStructure.mat'];
 % kineticsDataFile = [dataDir 'Task\PT55_ReachingTask3D_Contra_Kinematics_All.mat'];
@@ -23,7 +23,7 @@ metaDataFile = [dataDir 'Task\' subjectID '_ReachingTask_DataStructure.mat'];
 kineticsDataFile = [dataDir 'Task\' subjectID '_ReachingTask3D_Contra_Kinematics_All.mat'];
 trialsDataFile = [dataDir 'Task\' subjectID '_ReachingTask3D_Contra_QuestionableTrials_Move_and_Spectra_All.mat'];
 % restingDataFile = [dataDir 'Rest\ .mat'];
-restingDataFile = [dataDir 'Rest\' subjectID' '_RestingECoGData.mat'];
+restingDataFile = [dataDir 'Rest\' subjectID '_RestingECoGData.mat'];
 outDataFile = [dataDir 'Rest\RestingCorrelations.mat'];
 
 
@@ -68,10 +68,11 @@ for carGroup = 1:numCARGroups      % average and re-reference the signal by grou
     carGroupsSansNoisy{carGroup}(noisyBooleanIndices) = [];                             % remove noisy channels from CAR groups
 end
 
-%% Process Resting Signal
+%% Pre-Process Resting Signal
 restingSamplingRate = 512;      %MAGICNUMBER: 512Hz sampling rate for clinical ECoG system
-restingSignal = load(restingDataFile, 'signals');
-restingSignal = double(restingSignal.signals);
+% restingSignal = load(restingDataFile, 'signals');
+restingSignalFile = load(restingDataFile, 'signalList');
+restingSignal = double(restingSignalFile.signalList{1});            %TODO: loop through all resting signals
 signalLen = size(restingSignal, 1);
 
 % normalize signal by CAR groups
@@ -93,6 +94,7 @@ mainsNotchFilter120 = designfilt('bandstopiir', 'FilterOrder', 2, 'HalfPowerFreq
 restingSignalReRefNotched = filtfilt(mainsNotchFilter60, restingSignalReRef);
 restingSignalReRefNotched = filtfilt(mainsNotchFilter120, restingSignalReRefNotched);
 
+%% BLP correlation analysis
 % Compute BLP (band-limited power), i.e. slow rhythms of power envelope
 saveData.blpCorrelations = struct.empty;
 bandPassFrequencyList = [8, 10; 8, 13; 13, 30; 35, 50; 70, 100; 100, 140]';
@@ -111,7 +113,8 @@ for bandPassFrequencies = bandPassFrequencyList
     restingBandPassEnvelopeFiltered = filtfilt(lowPassFilter, restingBandPassEnvelope);
 
     % compute correlation matrix 
-    restingCorrelationMatrix = corrcoef(restingBandPassEnvelopeFiltered(:, channels));     % limit only to useful channels (electrodes)
+%     restingCorrelationMatrix = corrcoef(restingBandPassEnvelopeFiltered(:, channels));     % limit only to useful channels (electrodes)
+    restingCorrelationMatrix = corrcoef(restingBandPassEnvelopeFiltered);     % analyze all channels (prune useful channels later)
 
     % save the data to disc
     saveData.blpCorrelations(end+1).bandPassFrequencies = bandPassFrequencies;
@@ -135,11 +138,12 @@ for bandPassFrequencies = bandPassFrequencyList
         cLimMin = -cLimMax;
         % cLimMin = min(abs(restingCorrelationMatrix(channelToPlot, :)));
         % cLimMax = max(abs(restingCorrelationMatrix(channelToPlot, :)));
-        imagesc(flipud(rot90(reshape([squeeze(restingCorrelationMatrix(channelToPlot, :)), 0, 0], 8, 8))), [cLimMin cLimMax]) % flip and rotate to get orientation of 1-8 left-to-righ on top row
+        imagesc(flipud(rot90(reshape(restingCorrelationMatrix(channelToPlot, :), 8, 8))), [cLimMin cLimMax]) % flip and rotate to get orientation of 1-8 left-to-righ on top row
         colormap(colorMapWhiteMiddle);
         colorbar()
-        fileOut = sprintf('%sFigures\\Correlation Matrix - %s - FreqBand %03i-%03iHz - Seed Ch %02i.png', dataDir, subjectID, bandPassFrequencies(1), bandPassFrequencies(2), channelToPlot);
-        print(figCorrelationMatrix, fileOut,  '-dpng');    % save figure
+        fileOut = sprintf('%sFigures\\Correlation Matrix - %s - FreqBand %03i-%03iHz - Seed Ch %02i', dataDir, subjectID, bandPassFrequencies(1), bandPassFrequencies(2), channelToPlot);
+        print(figCorrelationMatrix, [fileOut '.png'],  '-dpng');    % save figure as PNG
+        savefig(figCorrelationMatrix, [fileOut '.fig']);               % save figure as FIG
         close(figCorrelationMatrix);
 
         % % plot a sample channel 
