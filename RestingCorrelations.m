@@ -3,7 +3,7 @@
 %% Setup
 % define data files
 % % Pt 139 (PT55) data files
-ptNumber = 135;
+ptNumber = 133;
 % dataDir = 'E:\Data\ECoG Task-Rest\139\';
 % metaDataFile = [dataDir 'Task\PT55_ReachingTask_DataStructure.mat'];
 % kineticsDataFile = [dataDir 'Task\PT55_ReachingTask3D_Contra_Kinematics_All.mat'];
@@ -70,9 +70,10 @@ end
 
 %% Pre-Process Resting Signal
 restingSamplingRate = 512;      %MAGICNUMBER: 512Hz sampling rate for clinical ECoG system
-% restingSignal = load(restingDataFile, 'signals');
-restingSignalFile = load(restingDataFile, 'signalList');
-restingSignal = double(restingSignalFile.signalList{1});            %TODO: loop through all resting signals
+restingSignal = load(restingDataFile, 'signal');
+restingSignal = double(restingSignal.signal);
+% restingSignalFile = load(restingDataFile, 'signalList');
+% restingSignal = double(restingSignalFile.signalList{1});            %TODO: loop through all resting signals
 signalLen = size(restingSignal, 1);
 
 % normalize signal by CAR groups
@@ -80,7 +81,6 @@ meanRestingSignalCARGroups = cell(numCARGroups, 1);
 restingSignalReRef = zeros(size(restingSignal));
 for carGroup = 1:numCARGroups      % average and re-reference the signal by group
     meanRestingSignalCARGroups{carGroup} = mean(restingSignal(:, carGroupsSansNoisy{carGroup}), 2);     % don't include noisy electrodes in the mean
-%     restingSignalReRef(:, carGroups{carGroup}) = restingSignal(:, carGroups{carGroup}) - repmat( meanRestingSignalCARGroups{carGroup}, size(carGroups{carGroup}) );
     restingSignalReRef(:, carGroups{carGroup}) = bsxfun(@minus, restingSignal(:, carGroups{carGroup}), meanRestingSignalCARGroups{carGroup});
 end
 
@@ -113,8 +113,8 @@ for bandPassFrequencies = bandPassFrequencyList
     restingBandPassEnvelopeFiltered = filtfilt(lowPassFilter, restingBandPassEnvelope);
 
     % compute correlation matrix 
-%     restingCorrelationMatrix = corrcoef(restingBandPassEnvelopeFiltered(:, channels));     % limit only to useful channels (electrodes)
-    restingCorrelationMatrix = corrcoef(restingBandPassEnvelopeFiltered);     % analyze all channels (prune useful channels later)
+    restingCorrelationMatrix = corrcoef(restingBandPassEnvelopeFiltered(:, channels));     % limit only to useful channels (electrodes)
+%     restingCorrelationMatrix = corrcoef(restingBandPassEnvelopeFiltered);     % analyze all channels (prune useful channels later)
 
     % save the data to disc
     saveData.blpCorrelations(end+1).bandPassFrequencies = bandPassFrequencies;
