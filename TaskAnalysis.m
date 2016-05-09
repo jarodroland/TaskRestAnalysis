@@ -6,21 +6,21 @@
 ptNumber = 133;
 % dataDir = 'E:\Data\ECoG Task-Rest\139\';
 % metaDataFile = [dataDir 'Task\PT55_ReachingTask_DataStructure.mat'];
-% kineticsDataFile = [dataDir 'Task\PT55_ReachingTask3D_Contra_Kinematics_All.mat'];
+% kinematicsDataFile = [dataDir 'Task\PT55_ReachingTask3D_Contra_Kinematics_All.mat'];
 % trialsDataFile = [dataDir 'Task\PT55_ReachingTask3D_Contra_QuestionableTrials_Move_and_Spectra_All.mat'];
 % restingDataFile = [dataDir 'Rest\121004-B5-7-INV_7E_EDF_seg2.mat'];
 
 % % Pt 145 (PT__) data files
 % dataDir = 'E:\Data\ECoG Task-Rest\145\';
 % metaDataFile = [dataDir 'Task\145_ReachingTask_DataStructure.mat'];
-% kineticsDataFile = [dataDir 'Task\145_ReachingTask3D_Contra_Kinematics_All.mat'];
+% kinematicsDataFile = [dataDir 'Task\145_ReachingTask3D_Contra_Kinematics_All.mat'];
 % trialsDataFile = [dataDir 'Task\145_ReachingTask3D_Contra_QuestionableTrials_Move_and_Spectra_All.mat'];
 % restingDataFile = [dataDir 'Rest\.mat'];
 
 subjectID = num2str(ptNumber);
 dataDir = ['E:\Data\ECoG Task-Rest\' subjectID '\'];
 metaDataFile = [dataDir 'Task\' subjectID '_ReachingTask_DataStructure.mat'];
-kineticsDataFile = [dataDir 'Task\' subjectID '_ReachingTask3D_Contra_Kinematics_All.mat'];
+kinematicsDataFile = [dataDir 'Task\' subjectID '_ReachingTask3D_Contra_Kinematics_All.mat'];
 trialsDataFile = [dataDir 'Task\' subjectID '_ReachingTask3D_Contra_QuestionableTrials_Move_and_Spectra_All.mat'];
 outDataFile = [dataDir 'Task\TaskActivations.mat'];
 
@@ -97,15 +97,15 @@ taskFileStart = cell(numTaskFiles, 1);
 itiMeanSpectra = zeros(numTaskFiles, length(freqList), numChannels, itiLength);     % TODO: numChannels hard-coded b/c we won't know until we're inside the loop
 trialMeanSpectra = zeros(numTaskFiles, length(freqList), numChannels, moveLength);
 
-% load kinetics and trial label data
-kineticsData = load(kineticsDataFile, 'HoldAStarts_used', 'MoveOnsets_used', 'HoldBStarts_used');   % 'ITIStarts_used', 
-moveOnset = kineticsData.MoveOnsets_used;
-% moveEnd = kineticsData.HoldBStarts_used;    % defines move end by start of Hold B section (which is defined as when subject actually reached the target)
-% itiStarts = kineticsData.ITIStarts_used;
-itiStarts = kineticsData.HoldAStarts_used + 0.2*samplingRate;       % use 0.2s after start of HoldA period for ITI 
+% load kinematics and trial label data
+kinematicsData = load(kinematicsDataFile, 'HoldAStarts_used', 'MoveOnsets_used', 'HoldBStarts_used');   % 'ITIStarts_used', 
+moveOnset = kinematicsData.MoveOnsets_used;
+% moveEnd = kinematicsData.HoldBStarts_used;    % defines move end by start of Hold B section (which is defined as when subject actually reached the target)
+% itiStarts = kinematicsData.ITIStarts_used;
+itiStarts = kinematicsData.HoldAStarts_used + 0.2*samplingRate;       % use 0.2s after start of HoldA period for ITI 
 trialsData = load(trialsDataFile, 'GoodTrials');
 goodTrials = trialsData.GoodTrials;
-clear('kineticsData', 'trialsData');
+clear('kinematicsData', 'trialsData');
 
 % loop through all task files and process signal individually
 for i = 1:numTaskFiles

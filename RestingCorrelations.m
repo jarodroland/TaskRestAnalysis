@@ -4,25 +4,27 @@
 % define data files
 % % Pt 139 (PT55) data files
 ptNumber = 133;
+restingSamplingRate = 1200;
 % dataDir = 'E:\Data\ECoG Task-Rest\139\';
 % metaDataFile = [dataDir 'Task\PT55_ReachingTask_DataStructure.mat'];
-% kineticsDataFile = [dataDir 'Task\PT55_ReachingTask3D_Contra_Kinematics_All.mat'];
+% kinematicsDataFile = [dataDir 'Task\PT55_ReachingTask3D_Contra_Kinematics_All.mat'];
 % trialsDataFile = [dataDir 'Task\PT55_ReachingTask3D_Contra_QuestionableTrials_Move_and_Spectra_All.mat'];
 % restingDataFile = [dataDir 'Rest\121004-B5-7-INV_7E_EDF_seg2.mat'];
 
 % % Pt 145 (PT__) data files
+% restingSamplingRate = 512;      %MAGICNUMBER: 512Hz sampling rate for clinical ECoG system
+
 % dataDir = 'E:\Data\ECoG Task-Rest\145\';
 % metaDataFile = [dataDir 'Task\145_ReachingTask_DataStructure.mat'];
-% kineticsDataFile = [dataDir 'Task\145_ReachingTask3D_Contra_Kinematics_All.mat'];
+% kinematicsDataFile = [dataDir 'Task\145_ReachingTask3D_Contra_Kinematics_All.mat'];
 % trialsDataFile = [dataDir 'Task\145_ReachingTask3D_Contra_QuestionableTrials_Move_and_Spectra_All.mat'];
 % restingDataFile = [dataDir 'Rest\.mat'];
 
 subjectID = num2str(ptNumber);
 dataDir = ['E:\Data\ECoG Task-Rest\' subjectID '\'];
 metaDataFile = [dataDir 'Task\' subjectID '_ReachingTask_DataStructure.mat'];
-kineticsDataFile = [dataDir 'Task\' subjectID '_ReachingTask3D_Contra_Kinematics_All.mat'];
+kinematicsDataFile = [dataDir 'Task\' subjectID '_ReachingTask3D_Contra_Kinematics_All.mat'];
 trialsDataFile = [dataDir 'Task\' subjectID '_ReachingTask3D_Contra_QuestionableTrials_Move_and_Spectra_All.mat'];
-% restingDataFile = [dataDir 'Rest\ .mat'];
 restingDataFile = [dataDir 'Rest\' subjectID '_RestingECoGData.mat'];
 outDataFile = [dataDir 'Rest\RestingCorrelations.mat'];
 
@@ -69,7 +71,6 @@ for carGroup = 1:numCARGroups      % average and re-reference the signal by grou
 end
 
 %% Pre-Process Resting Signal
-restingSamplingRate = 512;      %MAGICNUMBER: 512Hz sampling rate for clinical ECoG system
 restingSignal = load(restingDataFile, 'signal');
 restingSignal = double(restingSignal.signal);
 % restingSignalFile = load(restingDataFile, 'signalList');
