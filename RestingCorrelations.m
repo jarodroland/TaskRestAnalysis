@@ -23,6 +23,8 @@
 % restingDataFile = [dataDir 'Rest\.mat'];
 
 subjectID = num2str(ptNumber);
+disp(['---Starting ' subjectID]);
+
 dataDir = ['E:\Data\ECoG Task-Rest\' subjectID '\'];
 metaDataFile = [dataDir 'Task\' subjectID '_ReachingTask_DataStructure.mat'];
 kinematicsDataFile = [dataDir 'Task\' subjectID '_ReachingTask3D_Contra_Kinematics_All.mat'];
@@ -64,6 +66,7 @@ frequencyIndexToPlot = [10 46];       % frequency index at 10 & 100Hz for Carl's
 
 
 %% Load Resting Signal Data
+disp('---Loading Resting Signal');
 restingSignal = load(restingDataFile, 'signal');
 restingSignal = double(restingSignal.signal);
 % restingSignalFile = load(restingDataFile, 'signalList');
@@ -73,11 +76,12 @@ numChannels = size(restingSignal, 2);
 
 
 %% Pre-Process Resting Signal
+disp('---Pre Processing Resting Signal');
 % Common average re-referencing by channel groups
 % group our channels (by amplifier) to common-average reference within each group
 carGroupsSansNoisy = cell(numCARGroups, 1);
 for carGroup = 1:numCARGroups      % average and re-reference the signal by group
-%     carGroups{carGroup}(carGroups{carGroup} > numChannels) = [];                        % limit to numChannels
+    carGroups{carGroup}(carGroups{carGroup} > numChannels) = [];                        % limit to numChannels (there may be more task channels than rest channels)
     noisyBooleanIndices = ismember(carGroups{carGroup}, metaData.NoisyChannels);        % index of noisy channels
     carGroupsSansNoisy{carGroup} = carGroups{carGroup};                               	% make a copy to edit
     carGroupsSansNoisy{carGroup}(noisyBooleanIndices) = [];                             % remove noisy channels from CAR groups
@@ -103,6 +107,7 @@ restingSignalReRefNotched = filtfilt(mainsNotchFilter120, restingSignalReRefNotc
 
 
 %% BLP correlation analysis
+disp('---Band Limited Power Analysis');
 % Compute BLP (band-limited power), i.e. slow rhythms of power envelope
 saveData.blpCorrelations = struct.empty;
 bandPassFrequencyList = [1, 4; 4, 8; 8, 10; 8, 13; 13, 30; 35, 50; 70, 85; 70, 100; 90, 105; 100, 140]';
@@ -166,3 +171,4 @@ end
 
 save(outDataFile, '-struct', 'saveData');
 
+disp('---Done');
